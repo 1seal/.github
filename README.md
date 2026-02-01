@@ -1,21 +1,96 @@
-<!-- path: profile/README.md -->
-
 # 1seal
 
-Offline pre-transaction security for AI agents and server-side wallet APIs.
+last-mile verification for trust infrastructure.
 
-We build deterministic guardrails that sit **after policy/simulation and immediately before the signing boundary** (MPC/HSM). The goal is to prevent “what you see ≠ what gets signed” failures—address poisoning, alias confusables, and last-mile drift—by validating the **canonical payload** right before execution.
+## what is this
 
-## What we build
+1seal is designed to provide semantic verification immediately before signing or authorization. it's the layer that checks whether the payload matches intent — complementing identity (pki/sigstore), provenance (slsa/in-toto), and integrity (checksums/transparency logs).
 
-**SealGuard** (beta) — a stateless pre-sign validator that canonicalizes the transaction payload and returns an auditable verdict (`ok / step-up / block`) with deterministic reason codes.
+## status
 
-**TxSeal** — emits DSSE receipts for signing decisions and evidence so flows can be verified offline. Includes a zero-runtime-deps DSSE+JCS verifier.
+this repository is documentation and specification first. implementation remains private. no feature promises or timelines.
 
-**PoisonAtlas** — dataset format for address-poisoning research and evaluation.
+what's here:
+- thesis and positioning
+- operational protocol specifications
+- threat model and non-goals
 
-## Status
+what's not here:
+- implementation code
+- detection algorithms
 
-Private beta. The core engine and full rule sets are iterated with a small set of design partners. Expect breaking changes until a 1.x GA release is announced.
+## the problem
 
-Security reports: please follow `SECURITY.md` in this org’s `.github` repository.
+every signing system has the same gap:
+
+- pki/sigstore answers "who signed this"
+- slsa/in-toto answers "where was this built"
+- checksums/transparency logs answer "what bytes moved"
+
+none of these verify whether the payload matches intent.
+
+that gap is where manipulation attacks live: payload substitution, address poisoning, config drift, context injection. the signature is valid. the provenance is clean. and the thing you signed is not what you meant to sign.
+
+## where 1seal fits
+
+	layer 5: authorization (opa, cedar)
+	layer 4: semantics (1seal) ← here
+	layer 3: provenance (slsa, in-toto)
+	layer 2: integrity (checksums, rekor)
+	layer 1: identity (pki, sigstore/fulcio)
+
+## operational protocols
+
+security controls must include brakes. see [docs/protocols/](docs/protocols/) for:
+
+- degraded mode policy — what happens when verification cannot complete
+- appeal and resolution — how false positives are handled
+- invariant lifecycle — how rules are created, promoted, deprecated, retired
+- error cost framework — how thresholds are calibrated per domain
+
+## published advisories
+
+security research in software supply chain trust infrastructure:
+
+| CVE            | component                    | patched                      | advisory                                                                                         |
+| -------------- | ---------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| CVE-2026-22703 | sigstore/cosign              | cosign v2.6.2; cosign v3.0.4 | [GHSA-whqx-f9j3-ch6m](https://github.com/advisories/GHSA-whqx-f9j3-ch6m)                         |
+| CVE-2026-23831 | sigstore/rekor               | rekor 1.5.0                  | [GHSA-273p-m2cw-6833](https://github.com/sigstore/rekor/security/advisories/GHSA-273p-m2cw-6833) |
+| CVE-2026-24117 | sigstore/rekor               | rekor 1.5.0                  | [GHSA-4c4x-jm2x-pf9j](https://github.com/advisories/GHSA-4c4x-jm2x-pf9j)                         |
+| CVE-2026-24137 | sigstore/sigstore            | sigstore 1.10.4              | [GHSA-fcv2-xgw5-pqxf](https://github.com/advisories/GHSA-fcv2-xgw5-pqxf)                         |
+| CVE-2026-23991 | theupdateframework/go-tuf/v2 | go-tuf/v2 2.3.1              | [GHSA-846p-jg2w-w324](https://github.com/advisories/GHSA-846p-jg2w-w324)                         |
+| CVE-2026-23992 | theupdateframework/go-tuf/v2 | go-tuf/v2 2.3.1              | [GHSA-fphv-w9fq-2525](https://github.com/advisories/GHSA-fphv-w9fq-2525)                         |
+| CVE-2026-24686 | theupdateframework/go-tuf/v2 | go-tuf/v2 2.4.1              | [GHSA-jqc5-w2xx-5vq4](https://github.com/advisories/GHSA-jqc5-w2xx-5vq4)                         |
+| CVE-2026-24845 | chainguard-dev/malcontent    | malcontent 1.20.3            | [GHSA-9m43-p3cx-w8j5](https://github.com/advisories/GHSA-9m43-p3cx-w8j5)                         |
+| CVE-2026-24846 | chainguard-dev/malcontent    | malcontent 1.20.3            | [GHSA-923j-vrcg-hxwh](https://github.com/advisories/GHSA-923j-vrcg-hxwh)                         |
+
+all research follows coordinated vulnerability disclosure (cvd).
+
+## threat model
+
+see [docs/THREAT\_MODEL.md](docs/THREAT_MODEL.md) for:
+- what 1seal protects against
+- what 1seal does not protect against
+- trust assumptions
+- adversary model
+
+## security policy
+
+see [SECURITY.md](SECURITY.md) for vulnerability reporting.
+
+## contact
+
+interested in design partner conversations: hello@1seal.org
+
+---
+
+## docs structure
+
+	docs/
+	├── protocols/
+	│   ├── DEGRADED_MODE.md
+	│   ├── APPEAL_RESOLUTION.md
+	│   ├── INVARIANT_LIFECYCLE.md
+	│   └── ERROR_COST_FRAMEWORK.md
+	├── THREAT_MODEL.md
+	└── NON_GOALS.md
